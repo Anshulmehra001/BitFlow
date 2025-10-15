@@ -1,0 +1,401 @@
+{
+  "monitoring": {
+    "enabled": true,
+    "interval": 30,
+    "retention": {
+      "metrics": "90d",
+      "logs": "30d",
+      "traces": "7d"
+    }
+  },
+  "collectors": {
+    "prometheus": {
+      "enabled": true,
+      "port": 9090,
+      "scrape_interval": "30s",
+      "evaluation_interval": "30s",
+      "external_labels": {
+        "environment": "production",
+        "service": "bitflow"
+      },
+      "targets": [
+        {
+          "job": "bitflow-api",
+          "targets": ["localhost:3000"],
+          "metrics_path": "/metrics",
+          "scrape_interval": "15s"
+        },
+        {
+          "job": "bitflow-contracts",
+          "targets": ["localhost:8080"],
+          "metrics_path": "/metrics",
+          "scrape_interval": "30s"
+        },
+        {
+          "job": "node-exporter",
+          "targets": ["localhost:9100"],
+          "scrape_interval": "15s"
+        },
+        {
+          "job": "postgres-exporter",
+          "targets": ["localhost:9187"],
+          "scrape_interval": "30s"
+        },
+        {
+          "job": "redis-exporter",
+          "targets": ["localhost:9121"],
+          "scrape_interval": "30s"
+        }
+      ]
+    },
+    "grafana": {
+      "enabled": true,
+      "port": 3001,
+      "admin_user": "admin",
+      "admin_password": "${GRAFANA_ADMIN_PASSWORD}",
+      "database": {
+        "type": "postgres",
+        "host": "localhost:5432",
+        "name": "grafana",
+        "user": "grafana",
+        "password": "${GRAFANA_DB_PASSWORD}"
+      },
+      "dashboards": [
+        {
+          "name": "BitFlow Overview",
+          "file": "monitoring/grafana-dashboard.json",
+          "folder": "BitFlow"
+        },
+        {
+          "name": "API Performance",
+          "file": "monitoring/api-dashboard.json",
+          "folder": "BitFlow"
+        },
+        {
+          "name": "Stream Analytics",
+          "file": "monitoring/stream-dashboard.json",
+          "folder": "BitFlow"
+        },
+        {
+          "name": "Bridge Monitoring",
+          "file": "monitoring/bridge-dashboard.json",
+          "folder": "BitFlow"
+        },
+        {
+          "name": "DeFi Protocols",
+          "file": "monitoring/defi-dashboard.json",
+          "folder": "BitFlow"
+        }
+      ]
+    },
+    "alertmanager": {
+      "enabled": true,
+      "port": 9093,
+      "config_file": "monitoring/alert_rules.yml",
+      "storage_path": "/var/lib/alertmanager",
+      "retention": "120h",
+      "routes": [
+        {
+          "match": {
+            "severity": "critical"
+          },
+          "receiver": "critical-alerts",
+          "group_wait": "10s",
+          "group_interval": "5m",
+          "repeat_interval": "12h"
+        },
+        {
+          "match": {
+            "severity": "warning"
+          },
+          "receiver": "warning-alerts",
+          "group_wait": "30s",
+          "group_interval": "15m",
+          "repeat_interval": "24h"
+        }
+      ],
+      "receivers": [
+        {
+          "name": "critical-alerts",
+          "slack_configs": [
+            {
+              "api_url": "${SLACK_WEBHOOK_URL}",
+              "channel": "#bitflow-alerts",
+              "title": "Critical Alert: {{ .GroupLabels.alertname }}",
+              "text": "{{ range .Alerts }}{{ .Annotations.description }}{{ end }}"
+            }
+          ],
+          "pagerduty_configs": [
+            {
+              "routing_key": "${PAGERDUTY_INTEGRATION_KEY}",
+              "description": "{{ .GroupLabels.alertname }}"
+            }
+          ]
+        },
+        {
+          "name": "warning-alerts",
+          "slack_configs": [
+            {
+              "api_url": "${SLACK_WEBHOOK_URL}",
+              "channel": "#bitflow-monitoring",
+              "title": "Warning: {{ .GroupLabels.alertname }}",
+              "text": "{{ range .Alerts }}{{ .Annotations.description }}{{ end }}"
+            }
+          ]
+        }
+      ]
+    },
+    "jaeger": {
+      "enabled": true,
+      "collector_port": 14268,
+      "query_port": 16686,
+      "sampling_strategies": {
+        "default_strategy": {
+          "type": "probabilistic",
+          "param": 0.1
+        },
+        "per_service_strategies": [
+          {
+            "service": "bitflow-api",
+            "type": "probabilistic",
+            "param": 0.2
+          },
+          {
+            "service": "bridge-adapter",
+            "type": "probabilistic",
+            "param": 0.5
+          }
+        ]
+      },
+      "storage": {
+        "type": "elasticsearch",
+        "elasticsearch": {
+          "server_urls": ["http://localhost:9200"],
+          "index_prefix": "jaeger"
+        }
+      }
+    },
+    "elasticsearch": {
+      "enabled": true,
+      "port": 9200,
+      "cluster_name": "bitflow-logs",
+      "node_name": "bitflow-node-1",
+      "indices": {
+        "logs": {
+          "pattern": "bitflow-logs-*",
+          "settings": {
+            "number_of_shards": 3,
+            "number_of_replicas": 1,
+            "refresh_interval": "5s"
+          },
+          "mappings": {
+            "properties": {
+              "@timestamp": {"type": "date"},
+              "level": {"type": "keyword"},
+              "message": {"type": "text"},
+              "service": {"type": "keyword"},
+              "trace_id": {"type": "keyword"},
+              "span_id": {"type": "keyword"}
+            }
+          }
+        }
+      }
+    },
+    "logstash": {
+      "enabled": true,
+      "port": 5044,
+      "pipeline": {
+        "input": {
+          "beats": {
+            "port": 5044
+          },
+          "http": {
+            "port": 8080
+          }
+        },
+        "filter": [
+          {
+            "if": "[fields][service] == 'bitflow-api'",
+            "json": {
+              "source": "message"
+            }
+          },
+          {
+            "date": {
+              "match": ["timestamp", "ISO8601"]
+            }
+          },
+          {
+            "mutate": {
+              "add_field": {
+                "environment": "production"
+              }
+            }
+          }
+        ],
+        "output": {
+          "elasticsearch": {
+            "hosts": ["localhost:9200"],
+            "index": "bitflow-logs-%{+YYYY.MM.dd}"
+          }
+        }
+      }
+    },
+    "filebeat": {
+      "enabled": true,
+      "inputs": [
+        {
+          "type": "log",
+          "enabled": true,
+          "paths": [
+            "/var/log/bitflow/*.log",
+            "/var/log/bitflow/api/*.log"
+          ],
+          "fields": {
+            "service": "bitflow-api",
+            "environment": "production"
+          },
+          "multiline": {
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}",
+            "negate": true,
+            "match": "after"
+          }
+        },
+        {
+          "type": "docker",
+          "enabled": true,
+          "containers": {
+            "paths": ["/var/lib/docker/containers/*/*.log"],
+            "stream": "all"
+          },
+          "processors": [
+            {
+              "add_docker_metadata": {
+                "host": "unix:///var/run/docker.sock"
+              }
+            }
+          ]
+        }
+      ],
+      "output": {
+        "logstash": {
+          "hosts": ["localhost:5044"]
+        }
+      }
+    }
+  },
+  "custom_metrics": {
+    "business": [
+      {
+        "name": "active_streams_total",
+        "type": "gauge",
+        "help": "Total number of active payment streams",
+        "labels": ["status", "type"]
+      },
+      {
+        "name": "stream_creation_rate",
+        "type": "counter",
+        "help": "Rate of stream creation",
+        "labels": ["user_type", "amount_range"]
+      },
+      {
+        "name": "payment_volume_total",
+        "type": "counter",
+        "help": "Total payment volume processed",
+        "labels": ["currency", "protocol"]
+      },
+      {
+        "name": "yield_generated_total",
+        "type": "counter",
+        "help": "Total yield generated",
+        "labels": ["protocol", "asset"]
+      },
+      {
+        "name": "bridge_transaction_duration_seconds",
+        "type": "histogram",
+        "help": "Duration of bridge transactions",
+        "buckets": [1, 5, 10, 30, 60, 300, 600, 1800]
+      }
+    ],
+    "technical": [
+      {
+        "name": "api_request_duration_seconds",
+        "type": "histogram",
+        "help": "API request duration",
+        "buckets": [0.1, 0.5, 1, 2, 5, 10, 30]
+      },
+      {
+        "name": "database_query_duration_seconds",
+        "type": "histogram",
+        "help": "Database query duration",
+        "buckets": [0.01, 0.05, 0.1, 0.5, 1, 5]
+      },
+      {
+        "name": "cache_hit_ratio",
+        "type": "gauge",
+        "help": "Cache hit ratio",
+        "labels": ["cache_type"]
+      },
+      {
+        "name": "external_service_requests_total",
+        "type": "counter",
+        "help": "Total requests to external services",
+        "labels": ["service", "method", "status"]
+      },
+      {
+        "name": "circuit_breaker_state",
+        "type": "gauge",
+        "help": "Circuit breaker state (0=closed, 1=open, 2=half-open)",
+        "labels": ["service"]
+      }
+    ]
+  },
+  "health_checks": {
+    "endpoints": [
+      {
+        "name": "api",
+        "url": "http://localhost:3000/health",
+        "interval": 30,
+        "timeout": 10,
+        "expected_status": 200
+      },
+      {
+        "name": "database",
+        "type": "postgres",
+        "connection_string": "${DATABASE_URL}",
+        "interval": 60,
+        "timeout": 5,
+        "query": "SELECT 1"
+      },
+      {
+        "name": "redis",
+        "type": "redis",
+        "connection_string": "${REDIS_URL}",
+        "interval": 60,
+        "timeout": 5,
+        "command": "PING"
+      },
+      {
+        "name": "starknet",
+        "url": "${STARKNET_RPC_URL}",
+        "interval": 120,
+        "timeout": 30,
+        "method": "POST",
+        "body": "{\"jsonrpc\":\"2.0\",\"method\":\"starknet_blockNumber\",\"params\":[],\"id\":1}"
+      }
+    ]
+  },
+  "sla": {
+    "targets": {
+      "availability": 99.9,
+      "response_time_p95": 2000,
+      "response_time_p99": 5000,
+      "error_rate": 0.1
+    },
+    "reporting": {
+      "enabled": true,
+      "frequency": "daily",
+      "recipients": ["ops@bitflow.app", "engineering@bitflow.app"]
+    }
+  }
+}

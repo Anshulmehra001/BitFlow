@@ -1,0 +1,128 @@
+# Prometheus alert rules for BitFlow
+
+groups:
+  - name: bitflow_alerts
+    rules:
+      # API Health Alerts
+      - alert: BitFlowAPIDown
+        expr: up{job="bitflow-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "BitFlow API is down"
+          description: "BitFlow API has been down for more than 1 minute"
+
+      - alert: HighAPILatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="bitflow-api"}[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High API latency detected"
+          description: "95th percentile latency is above 2 seconds for 5 minutes"
+
+      # Stream Management Alerts
+      - alert: HighStreamFailureRate
+        expr: rate(stream_creation_failures_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High stream creation failure rate"
+          description: "Stream creation failure rate is above 10% for 2 minutes"
+
+      - alert: StreamBalanceInsufficient
+        expr: streams_with_insufficient_balance > 10
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Multiple streams have insufficient balance"
+          description: "More than 10 streams have insufficient balance"
+
+      # Cross-Chain Bridge Alerts
+      - alert: BridgeTransactionStuck
+        expr: bridge_pending_transactions > 50
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Bridge transactions are stuck"
+          description: "More than 50 bridge transactions have been pending for over 10 minutes"
+
+      - alert: BridgeFailureRate
+        expr: rate(bridge_transaction_failures_total[10m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High bridge failure rate"
+          description: "Bridge transaction failure rate is above 5% for 5 minutes"
+
+      # System Resource Alerts
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is above 80% for 5 minutes"
+
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is above 85% for 5 minutes"
+
+      # Database Alerts
+      - alert: DatabaseConnectionsHigh
+        expr: pg_stat_database_numbackends > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High database connections"
+          description: "Database connections are above 80 for 5 minutes"
+
+      - alert: DatabaseDown
+        expr: up{job="postgres-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database is down"
+          description: "PostgreSQL database has been down for more than 1 minute"
+
+      # Yield Generation Alerts
+      - alert: YieldGenerationFailure
+        expr: rate(yield_generation_failures_total[10m]) > 0.02
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Yield generation failures detected"
+          description: "Yield generation failure rate is above 2% for 5 minutes"
+
+      # Security Alerts
+      - alert: UnauthorizedAccessAttempts
+        expr: rate(unauthorized_access_attempts_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High unauthorized access attempts"
+          description: "More than 10 unauthorized access attempts per minute for 2 minutes"
+
+      - alert: SuspiciousTransactionPattern
+        expr: suspicious_transactions_detected > 0
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Suspicious transaction pattern detected"
+          description: "Potential security threat detected in transaction patterns"

@@ -1,0 +1,18 @@
+[package]
+name = "bitflow"
+version = "0.1.0"
+edition = "2023_11"
+
+[dependencies]
+starknet = "2.6.3"
+
+[tool.snforge]
+# See more keys and their definitions at https://foundry-rs.github.io/starknet-foundry/appendix/snforge-toml.html
+
+[[target.starknet-contract]]
+sierra = true
+casm = true
+
+[scripts]
+test = "snforge test"
+build = "scarb build"

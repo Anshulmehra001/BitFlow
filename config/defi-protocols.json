@@ -1,0 +1,229 @@
+{
+  "vesu": {
+    "production": {
+      "contractAddress": "0x2545b2e5d519fc230e9cd781046d3a64e092114f07e75d59c90b7d8f75f4e9c",
+      "apiUrl": "https://api.vesu.xyz",
+      "supportedAssets": ["USDC", "USDT", "DAI", "wBTC", "ETH"],
+      "minStakeAmount": 1000000,
+      "maxStakeAmount": 100000000000,
+      "expectedApy": 0.08,
+      "riskLevel": "medium",
+      "liquidityThreshold": 1000000000,
+      "slippageTolerance": 0.005,
+      "gasEstimateMultiplier": 1.2,
+      "endpoints": {
+        "stake": "/v1/stake",
+        "unstake": "/v1/unstake",
+        "getRewards": "/v1/rewards",
+        "getApy": "/v1/apy",
+        "getLiquidity": "/v1/liquidity"
+      }
+    },
+    "staging": {
+      "contractAddress": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+      "apiUrl": "https://testnet-api.vesu.xyz",
+      "supportedAssets": ["tUSDC", "tUSDT", "tDAI", "wtBTC", "tETH"],
+      "minStakeAmount": 100000,
+      "maxStakeAmount": 10000000000,
+      "expectedApy": 0.12,
+      "riskLevel": "medium",
+      "liquidityThreshold": 100000000,
+      "slippageTolerance": 0.01,
+      "gasEstimateMultiplier": 1.5,
+      "endpoints": {
+        "stake": "/v1/stake",
+        "unstake": "/v1/unstake",
+        "getRewards": "/v1/rewards",
+        "getApy": "/v1/apy",
+        "getLiquidity": "/v1/liquidity"
+      }
+    }
+  },
+  "troves": {
+    "production": {
+      "contractAddress": "0x3456b2e5d519fc230e9cd781046d3a64e092114f07e75d59c90b7d8f75f4e9d",
+      "apiUrl": "https://api.troves.fi",
+      "supportedAssets": ["USDC", "USDT", "wBTC"],
+      "minStakeAmount": 5000000,
+      "maxStakeAmount": 50000000000,
+      "expectedApy": 0.06,
+      "riskLevel": "low",
+      "liquidityThreshold": 500000000,
+      "slippageTolerance": 0.003,
+      "gasEstimateMultiplier": 1.1,
+      "endpoints": {
+        "deposit": "/v1/deposit",
+        "withdraw": "/v1/withdraw",
+        "getYield": "/v1/yield",
+        "getApy": "/v1/apy",
+        "getBalance": "/v1/balance"
+      }
+    },
+    "staging": {
+      "contractAddress": "0x2345678901bcdef12345678901bcdef12345678901bcdef12345678901bcdef1",
+      "apiUrl": "https://testnet-api.troves.fi",
+      "supportedAssets": ["tUSDC", "tUSDT", "wtBTC"],
+      "minStakeAmount": 500000,
+      "maxStakeAmount": 5000000000,
+      "expectedApy": 0.08,
+      "riskLevel": "low",
+      "liquidityThreshold": 50000000,
+      "slippageTolerance": 0.005,
+      "gasEstimateMultiplier": 1.3,
+      "endpoints": {
+        "deposit": "/v1/deposit",
+        "withdraw": "/v1/withdraw",
+        "getYield": "/v1/yield",
+        "getApy": "/v1/apy",
+        "getBalance": "/v1/balance"
+      }
+    }
+  },
+  "endurfi": {
+    "production": {
+      "contractAddress": "0x4567c2e5d519fc230e9cd781046d3a64e092114f07e75d59c90b7d8f75f4e9e",
+      "apiUrl": "https://api.endur.fi",
+      "supportedAssets": ["USDC", "wBTC", "ETH"],
+      "minStakeAmount": 2000000,
+      "maxStakeAmount": 20000000000,
+      "expectedApy": 0.10,
+      "riskLevel": "high",
+      "liquidityThreshold": 200000000,
+      "slippageTolerance": 0.008,
+      "gasEstimateMultiplier": 1.3,
+      "endpoints": {
+        "stake": "/v1/stake",
+        "unstake": "/v1/unstake",
+        "compound": "/v1/compound",
+        "getRewards": "/v1/rewards",
+        "getApy": "/v1/apy"
+      }
+    },
+    "staging": {
+      "contractAddress": "0x3456789012cdef123456789012cdef123456789012cdef123456789012cdef12",
+      "apiUrl": "https://testnet-api.endur.fi",
+      "supportedAssets": ["tUSDC", "wtBTC", "tETH"],
+      "minStakeAmount": 200000,
+      "maxStakeAmount": 2000000000,
+      "expectedApy": 0.15,
+      "riskLevel": "high",
+      "liquidityThreshold": 20000000,
+      "slippageTolerance": 0.01,
+      "gasEstimateMultiplier": 1.5,
+      "endpoints": {
+        "stake": "/v1/stake",
+        "unstake": "/v1/unstake",
+        "compound": "/v1/compound",
+        "getRewards": "/v1/rewards",
+        "getApy": "/v1/apy"
+      }
+    }
+  },
+  "yieldStrategy": {
+    "defaultStrategy": "balanced",
+    "strategies": {
+      "conservative": {
+        "allocation": {
+          "troves": 0.7,
+          "vesu": 0.3,
+          "endurfi": 0.0
+        },
+        "riskTolerance": "low",
+        "expectedApy": 0.06,
+        "rebalanceThreshold": 0.05
+      },
+      "balanced": {
+        "allocation": {
+          "troves": 0.4,
+          "vesu": 0.4,
+          "endurfi": 0.2
+        },
+        "riskTolerance": "medium",
+        "expectedApy": 0.08,
+        "rebalanceThreshold": 0.1
+      },
+      "aggressive": {
+        "allocation": {
+          "troves": 0.2,
+          "vesu": 0.3,
+          "endurfi": 0.5
+        },
+        "riskTolerance": "high",
+        "expectedApy": 0.12,
+        "rebalanceThreshold": 0.15
+      }
+    },
+    "rebalancing": {
+      "frequency": "daily",
+      "minRebalanceAmount": 1000000,
+      "maxSlippage": 0.01,
+      "gasLimit": 500000
+    }
+  },
+  "monitoring": {
+    "healthChecks": {
+      "intervalMs": 30000,
+      "timeoutMs": 10000,
+      "retryAttempts": 3
+    },
+    "alerts": {
+      "lowLiquidity": 0.1,
+      "highSlippage": 0.02,
+      "protocolDown": true,
+      "unexpectedLoss": 0.05,
+      "highGasFees": 100000000000,
+      "lowApy": 0.02,
+      "contractUpgrade": true
+    },
+    "metrics": {
+      "enabled": true,
+      "collectInterval": 60000,
+      "customMetrics": [
+        "defi_total_value_locked",
+        "defi_yield_generated",
+        "defi_transaction_count",
+        "defi_gas_used",
+        "defi_slippage_rate",
+        "defi_protocol_uptime"
+      ]
+    }
+  },
+  "riskManagement": {
+    "enabled": true,
+    "maxExposurePerProtocol": 0.4,
+    "maxTotalExposure": 0.8,
+    "emergencyWithdrawal": {
+      "enabled": true,
+      "triggers": [
+        "protocol_exploit",
+        "high_slippage",
+        "liquidity_crisis",
+        "governance_attack"
+      ],
+      "cooldownPeriodMs": 3600000
+    },
+    "diversification": {
+      "enforced": true,
+      "minProtocols": 2,
+      "maxProtocolWeight": 0.6,
+      "rebalanceThreshold": 0.1
+    }
+  },
+  "security": {
+    "contractVerification": {
+      "enabled": true,
+      "requireVerified": true,
+      "auditRequirements": ["certik", "consensys", "openzeppelin"]
+    },
+    "transactionSigning": {
+      "multiSig": true,
+      "requiredSignatures": 2,
+      "timelock": 86400
+    },
+    "accessControl": {
+      "roleBasedAccess": true,
+      "adminRoles": ["protocol_admin", "risk_manager"],
+      "operatorRoles": ["yield_operator", "rebalancer"]
+    }
+  }
+}

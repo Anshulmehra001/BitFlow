@@ -1,0 +1,342 @@
+{
+  "services": {
+    "atomiq_bridge": {
+      "enabled": true,
+      "priority": "critical",
+      "configuration": "config/atomiq-bridge.json",
+      "healthCheck": {
+        "endpoint": "/v1/health",
+        "interval": 30,
+        "timeout": 10,
+        "retries": 3
+      },
+      "fallback": {
+        "enabled": true,
+        "strategy": "queue_transactions",
+        "maxQueueSize": 1000,
+        "queueTimeout": 3600
+      },
+      "monitoring": {
+        "metrics": [
+          "bridge_transaction_count",
+          "bridge_transaction_latency",
+          "bridge_failure_rate",
+          "bridge_queue_depth"
+        ],
+        "alerts": [
+          "bridge_down",
+          "high_failure_rate",
+          "queue_overflow",
+          "slow_confirmations"
+        ]
+      }
+    },
+    "vesu_protocol": {
+      "enabled": true,
+      "priority": "high",
+      "configuration": "config/defi-protocols.json",
+      "healthCheck": {
+        "endpoint": "/v1/health",
+        "interval": 60,
+        "timeout": 15,
+        "retries": 2
+      },
+      "fallback": {
+        "enabled": true,
+        "strategy": "switch_protocol",
+        "alternatives": ["troves", "endurfi"]
+      },
+      "monitoring": {
+        "metrics": [
+          "vesu_tvl",
+          "vesu_apy",
+          "vesu_transaction_count",
+          "vesu_gas_usage"
+        ],
+        "alerts": [
+          "protocol_down",
+          "low_liquidity",
+          "high_slippage",
+          "apy_drop"
+        ]
+      }
+    },
+    "troves_protocol": {
+      "enabled": true,
+      "priority": "high",
+      "configuration": "config/defi-protocols.json",
+      "healthCheck": {
+        "endpoint": "/v1/health",
+        "interval": 60,
+        "timeout": 15,
+        "retries": 2
+      },
+      "fallback": {
+        "enabled": true,
+        "strategy": "switch_protocol",
+        "alternatives": ["vesu", "endurfi"]
+      },
+      "monitoring": {
+        "metrics": [
+          "troves_tvl",
+          "troves_apy",
+          "troves_transaction_count",
+          "troves_gas_usage"
+        ],
+        "alerts": [
+          "protocol_down",
+          "low_liquidity",
+          "high_slippage",
+          "apy_drop"
+        ]
+      }
+    },
+    "endurfi_protocol": {
+      "enabled": true,
+      "priority": "medium",
+      "configuration": "config/defi-protocols.json",
+      "healthCheck": {
+        "endpoint": "/v1/health",
+        "interval": 60,
+        "timeout": 15,
+        "retries": 2
+      },
+      "fallback": {
+        "enabled": true,
+        "strategy": "switch_protocol",
+        "alternatives": ["vesu", "troves"]
+      },
+      "monitoring": {
+        "metrics": [
+          "endurfi_tvl",
+          "endurfi_apy",
+          "endurfi_transaction_count",
+          "endurfi_gas_usage"
+        ],
+        "alerts": [
+          "protocol_down",
+          "low_liquidity",
+          "high_slippage",
+          "apy_drop"
+        ]
+      }
+    },
+    "starknet_rpc": {
+      "enabled": true,
+      "priority": "critical",
+      "endpoints": [
+        "https://starknet-mainnet.public.blastapi.io",
+        "https://starknet-mainnet.infura.io/v3/${INFURA_PROJECT_ID}",
+        "https://starknet-mainnet.alchemy.com/v2/${ALCHEMY_API_KEY}"
+      ],
+      "loadBalancing": {
+        "strategy": "round_robin",
+        "healthCheck": true,
+        "failover": true
+      },
+      "rateLimiting": {
+        "requestsPerSecond": 100,
+        "burstLimit": 200
+      },
+      "monitoring": {
+        "metrics": [
+          "rpc_request_count",
+          "rpc_response_time",
+          "rpc_error_rate",
+          "rpc_block_lag"
+        ],
+        "alerts": [
+          "rpc_down",
+          "high_latency",
+          "block_lag",
+          "rate_limit_exceeded"
+        ]
+      }
+    },
+    "notification_services": {
+      "slack": {
+        "enabled": true,
+        "webhook_url": "${SLACK_WEBHOOK_URL}",
+        "channels": {
+          "alerts": "#bitflow-alerts",
+          "monitoring": "#bitflow-monitoring",
+          "deployments": "#bitflow-deployments"
+        },
+        "rate_limiting": {
+          "messages_per_minute": 10,
+          "burst_limit": 5
+        }
+      },
+      "email": {
+        "enabled": true,
+        "provider": "ses",
+        "configuration": {
+          "region": "us-east-1",
+          "from_address": "alerts@bitflow.app",
+          "reply_to": "noreply@bitflow.app"
+        },
+        "templates": {
+          "alert": "alert-template",
+          "incident": "incident-template",
+          "recovery": "recovery-template"
+        }
+      },
+      "pagerduty": {
+        "enabled": true,
+        "integration_key": "${PAGERDUTY_INTEGRATION_KEY}",
+        "escalation_policy": "bitflow-escalation",
+        "severity_mapping": {
+          "critical": "critical",
+          "high": "error",
+          "medium": "warning",
+          "low": "info"
+        }
+      },
+      "webhook": {
+        "enabled": true,
+        "endpoints": [
+          {
+            "url": "${WEBHOOK_ALERT_URL}",
+            "headers": {
+              "Authorization": "Bearer ${WEBHOOK_TOKEN}",
+              "Content-Type": "application/json"
+            },
+            "retry_policy": {
+              "max_retries": 3,
+              "backoff_multiplier": 2,
+              "initial_delay": 1000
+            }
+          }
+        ]
+      }
+    },
+    "analytics": {
+      "mixpanel": {
+        "enabled": true,
+        "project_token": "${MIXPANEL_PROJECT_TOKEN}",
+        "api_secret": "${MIXPANEL_API_SECRET}",
+        "events": [
+          "stream_created",
+          "stream_cancelled",
+          "payment_processed",
+          "yield_generated",
+          "user_registered"
+        ]
+      },
+      "amplitude": {
+        "enabled": false,
+        "api_key": "${AMPLITUDE_API_KEY}",
+        "batch_size": 100,
+        "flush_interval": 30000
+      }
+    },
+    "security": {
+      "recaptcha": {
+        "enabled": true,
+        "site_key": "${RECAPTCHA_SITE_KEY}",
+        "secret_key": "${RECAPTCHA_SECRET_KEY}",
+        "version": "v3",
+        "threshold": 0.5
+      },
+      "rate_limiting": {
+        "provider": "redis",
+        "configuration": "config/api-security.json"
+      },
+      "waf": {
+        "enabled": true,
+        "provider": "cloudflare",
+        "rules": "config/api-security.json"
+      }
+    }
+  },
+  "circuit_breakers": {
+    "global": {
+      "enabled": true,
+      "failure_threshold": 5,
+      "recovery_timeout": 60000,
+      "monitoring_window": 300000
+    },
+    "per_service": {
+      "atomiq_bridge": {
+        "failure_threshold": 3,
+        "recovery_timeout": 30000
+      },
+      "defi_protocols": {
+        "failure_threshold": 2,
+        "recovery_timeout": 120000
+      },
+      "starknet_rpc": {
+        "failure_threshold": 5,
+        "recovery_timeout": 15000
+      }
+    }
+  },
+  "service_mesh": {
+    "enabled": true,
+    "provider": "istio",
+    "features": {
+      "traffic_management": true,
+      "security": true,
+      "observability": true
+    },
+    "policies": {
+      "retry": {
+        "attempts": 3,
+        "per_try_timeout": "10s",
+        "retry_on": "5xx,reset,connect-failure,refused-stream"
+      },
+      "timeout": {
+        "request": "30s",
+        "idle": "60s"
+      },
+      "circuit_breaker": {
+        "consecutive_errors": 5,
+        "interval": "30s",
+        "base_ejection_time": "30s"
+      }
+    }
+  },
+  "observability": {
+    "tracing": {
+      "enabled": true,
+      "provider": "jaeger",
+      "sampling_rate": 0.1,
+      "propagation": "b3"
+    },
+    "metrics": {
+      "enabled": true,
+      "provider": "prometheus",
+      "custom_metrics": [
+        "external_service_requests_total",
+        "external_service_request_duration_seconds",
+        "external_service_errors_total",
+        "circuit_breaker_state"
+      ]
+    },
+    "logging": {
+      "enabled": true,
+      "structured": true,
+      "correlation_id": true,
+      "sensitive_data_masking": true
+    }
+  },
+  "testing": {
+    "health_checks": {
+      "enabled": true,
+      "interval": 30,
+      "timeout": 10,
+      "parallel": true
+    },
+    "integration_tests": {
+      "enabled": true,
+      "schedule": "0 */6 * * *",
+      "timeout": 300,
+      "retry_on_failure": true
+    },
+    "chaos_engineering": {
+      "enabled": false,
+      "tools": ["chaos-monkey", "gremlin"],
+      "schedule": "0 2 * * 1"
+    }
+  }
+}

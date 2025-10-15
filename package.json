@@ -1,0 +1,53 @@
+{
+  "name": "bitflow-protocol",
+  "version": "1.0.0",
+  "description": "Bitcoin Payment Streaming Protocol on Starknet - Starknet Re{Solve} Hackathon Submission",
+  "private": true,
+  "workspaces": [
+    "web",
+    "mobile", 
+    "api"
+  ],
+  "scripts": {
+    "install:all": "npm install --workspaces",
+    "dev:web": "cd web && npm run dev",
+    "dev:api": "cd api && npm start",
+    "dev:mobile": "cd mobile && npx expo start",
+    "build:all": "npm run build --workspaces",
+    "test:all": "npm run test --workspaces",
+    "lint:all": "npm run lint --workspaces",
+    "setup": "npm run install:all && echo 'BitFlow setup complete! Run npm run dev:web to start web app'",
+    "demo": "echo 'Starting BitFlow Demo...' && concurrently \"npm run dev:web\" \"npm run dev:api\"",
+    "contracts:build": "cd src && scarb build",
+    "contracts:test": "cd src && scarb test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/[your-username]/bitflow-protocol.git"
+  },
+  "keywords": [
+    "bitcoin",
+    "starknet",
+    "payment-streaming",
+    "defi",
+    "cross-chain",
+    "cairo",
+    "hackathon",
+    "web3"
+  ],
+  "author": "BitFlow Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "hackathon": {
+    "name": "Starknet Re{Solve} Hackathon 2025",
+    "tracks": ["Bitcoin Unleashed", "Next-Gen Payments"],
+    "demo": "http://localhost:3000",
+    "documentation": "./docs/README.md"
+  }
+}

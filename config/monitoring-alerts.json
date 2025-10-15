@@ -1,0 +1,279 @@
+{
+  "alerting": {
+    "channels": {
+      "slack": {
+        "enabled": true,
+        "webhookUrl": "${SLACK_WEBHOOK_URL}",
+        "channel": "#bitflow-alerts",
+        "username": "BitFlow Monitor",
+        "iconEmoji": ":warning:"
+      },
+      "email": {
+        "enabled": true,
+        "smtpHost": "${SMTP_HOST}",
+        "smtpPort": 587,
+        "smtpUser": "${SMTP_USER}",
+        "smtpPassword": "${SMTP_PASSWORD}",
+        "from": "alerts@bitflow.app",
+        "to": ["ops@bitflow.app", "dev@bitflow.app"]
+      },
+      "pagerduty": {
+        "enabled": true,
+        "integrationKey": "${PAGERDUTY_INTEGRATION_KEY}",
+        "severity": "error"
+      },
+      "webhook": {
+        "enabled": true,
+        "url": "${WEBHOOK_ALERT_URL}",
+        "headers": {
+          "Authorization": "Bearer ${WEBHOOK_TOKEN}",
+          "Content-Type": "application/json"
+        }
+      }
+    },
+    "rules": {
+      "critical": {
+        "channels": ["slack", "email", "pagerduty"],
+        "cooldownMinutes": 5,
+        "escalationMinutes": 15
+      },
+      "warning": {
+        "channels": ["slack", "email"],
+        "cooldownMinutes": 15,
+        "escalationMinutes": 60
+      },
+      "info": {
+        "channels": ["slack"],
+        "cooldownMinutes": 30,
+        "escalationMinutes": 0
+      }
+    }
+  },
+  "metrics": {
+    "collection": {
+      "intervalSeconds": 30,
+      "retentionDays": 90,
+      "aggregationIntervals": ["1m", "5m", "15m", "1h", "1d"]
+    },
+    "custom": {
+      "activeStreams": {
+        "type": "gauge",
+        "description": "Number of currently active payment streams",
+        "labels": ["status", "type"]
+      },
+      "streamCreationRate": {
+        "type": "counter",
+        "description": "Rate of stream creation",
+        "labels": ["user_type", "amount_range"]
+      },
+      "bridgeTransactionLatency": {
+        "type": "histogram",
+        "description": "Latency of bridge transactions",
+        "buckets": [1, 5, 10, 30, 60, 300, 600]
+      },
+      "yieldGenerated": {
+        "type": "counter",
+        "description": "Total yield generated",
+        "labels": ["protocol", "asset"]
+      },
+      "apiRequestDuration": {
+        "type": "histogram",
+        "description": "API request duration",
+        "buckets": [0.1, 0.5, 1, 2, 5, 10]
+      },
+      "errorRate": {
+        "type": "counter",
+        "description": "Error rate by endpoint",
+        "labels": ["endpoint", "error_type", "status_code"]
+      }
+    }
+  },
+  "healthChecks": {
+    "api": {
+      "endpoint": "/health",
+      "intervalSeconds": 30,
+      "timeoutSeconds": 10,
+      "expectedStatus": 200,
+      "expectedResponse": {"status": "healthy"}
+    },
+    "database": {
+      "type": "postgresql",
+      "intervalSeconds": 60,
+      "timeoutSeconds": 5,
+      "query": "SELECT 1",
+      "maxConnections": 100
+    },
+    "redis": {
+      "type": "redis",
+      "intervalSeconds": 60,
+      "timeoutSeconds": 5,
+      "command": "PING",
+      "expectedResponse": "PONG"
+    },
+    "starknet": {
+      "type": "rpc",
+      "endpoint": "${STARKNET_RPC_URL}",
+      "intervalSeconds": 120,
+      "timeoutSeconds": 30,
+      "method": "starknet_blockNumber"
+    },
+    "atomiqBridge": {
+      "type": "http",
+      "endpoint": "${ATOMIQ_BRIDGE_API_URL}/health",
+      "intervalSeconds": 60,
+      "timeoutSeconds": 10,
+      "expectedStatus": 200
+    },
+    "defiProtocols": {
+      "vesu": {
+        "endpoint": "${VESU_API_URL}/health",
+        "intervalSeconds": 300,
+        "timeoutSeconds": 15
+      },
+      "troves": {
+        "endpoint": "${TROVES_API_URL}/health",
+        "intervalSeconds": 300,
+        "timeoutSeconds": 15
+      }
+    }
+  },
+  "thresholds": {
+    "api": {
+      "responseTime95thPercentile": 2000,
+      "responseTime99thPercentile": 5000,
+      "errorRate": 0.01,
+      "requestsPerSecond": 1000,
+      "concurrentConnections": 5000,
+      "queueDepth": 100,
+      "timeoutRate": 0.005
+    },
+    "streams": {
+      "maxActiveStreams": 10000,
+      "creationFailureRate": 0.05,
+      "averageStreamDuration": 86400,
+      "streamProcessingLatency": 1000,
+      "failedPayments": 0.02,
+      "streamCancellationRate": 0.1
+    },
+    "bridge": {
+      "maxPendingTransactions": 50,
+      "transactionFailureRate": 0.02,
+      "averageConfirmationTime": 600,
+      "bridgeLatency": 300000,
+      "gasPrice": 50000000000,
+      "networkCongestion": 0.8
+    },
+    "yield": {
+      "minApy": 0.02,
+      "maxSlippage": 0.01,
+      "protocolFailureRate": 0.001,
+      "impermanentLoss": 0.05,
+      "liquidityUtilization": 0.9,
+      "rebalanceFrequency": 86400
+    },
+    "system": {
+      "cpuUsage": 80,
+      "memoryUsage": 85,
+      "diskUsage": 90,
+      "networkLatency": 100,
+      "diskIops": 1000,
+      "networkThroughput": 100,
+      "openFileDescriptors": 8192
+    },
+    "security": {
+      "failedAuthAttempts": 10,
+      "suspiciousActivity": 5,
+      "rateLimitViolations": 50,
+      "unauthorizedAccess": 1,
+      "dataBreachIndicators": 1
+    },
+    "business": {
+      "dailyActiveUsers": 1000,
+      "transactionVolume": 1000000,
+      "revenueGrowthRate": -0.1,
+      "customerChurnRate": 0.05,
+      "supportTicketVolume": 100
+    }
+  },
+  "incidents": {
+    "autoResolve": {
+      "enabled": true,
+      "timeoutMinutes": 60,
+      "confirmationRequired": true,
+      "healthCheckInterval": 300
+    },
+    "escalation": {
+      "levels": [
+        {
+          "name": "L1 - On-call Engineer",
+          "delayMinutes": 0,
+          "channels": ["pagerduty"],
+          "acknowledgmentTimeout": 5
+        },
+        {
+          "name": "L2 - Senior Engineer",
+          "delayMinutes": 15,
+          "channels": ["pagerduty", "email"],
+          "acknowledgmentTimeout": 10
+        },
+        {
+          "name": "L3 - Engineering Manager",
+          "delayMinutes": 30,
+          "channels": ["pagerduty", "email", "slack"],
+          "acknowledgmentTimeout": 15
+        },
+        {
+          "name": "L4 - CTO/VP Engineering",
+          "delayMinutes": 60,
+          "channels": ["pagerduty", "email", "slack", "webhook"],
+          "acknowledgmentTimeout": 30
+        }
+      ]
+    },
+    "runbooks": {
+      "apiDown": "https://docs.bitflow.app/runbooks/api-down",
+      "databaseDown": "https://docs.bitflow.app/runbooks/database-down",
+      "bridgeFailure": "https://docs.bitflow.app/runbooks/bridge-failure",
+      "highErrorRate": "https://docs.bitflow.app/runbooks/high-error-rate",
+      "securityBreach": "https://docs.bitflow.app/runbooks/security-breach",
+      "yieldProtocolFailure": "https://docs.bitflow.app/runbooks/yield-protocol-failure",
+      "massStreamFailure": "https://docs.bitflow.app/runbooks/mass-stream-failure",
+      "networkCongestion": "https://docs.bitflow.app/runbooks/network-congestion"
+    },
+    "postMortem": {
+      "required": true,
+      "template": "https://docs.bitflow.app/templates/post-mortem",
+      "timelineRequired": true,
+      "actionItemsRequired": true,
+      "reviewProcess": "engineering_review"
+    }
+  },
+  "dashboards": {
+    "grafana": {
+      "url": "${GRAFANA_URL}",
+      "apiKey": "${GRAFANA_API_KEY}",
+      "dashboards": [
+        {
+          "name": "BitFlow Overview",
+          "uid": "bitflow-overview",
+          "tags": ["bitflow", "overview"]
+        },
+        {
+          "name": "API Performance",
+          "uid": "api-performance",
+          "tags": ["bitflow", "api"]
+        },
+        {
+          "name": "Stream Analytics",
+          "uid": "stream-analytics",
+          "tags": ["bitflow", "streams"]
+        },
+        {
+          "name": "Bridge Monitoring",
+          "uid": "bridge-monitoring",
+          "tags": ["bitflow", "bridge"]
+        }
+      ]
+    }
+  }
+}

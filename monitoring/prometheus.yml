@@ -1,0 +1,50 @@
+# Prometheus configuration for BitFlow monitoring
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alert_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # BitFlow API metrics
+  - job_name: 'bitflow-api'
+    static_configs:
+      - targets: ['localhost:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # Starknet node metrics
+  - job_name: 'starknet-node'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 30s
+
+  # System metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['localhost:9100']
+
+  # Database metrics
+  - job_name: 'postgres-exporter'
+    static_configs:
+      - targets: ['localhost:9187']
+
+  # Redis metrics
+  - job_name: 'redis-exporter'
+    static_configs:
+      - targets: ['localhost:9121']
+
+  # Custom BitFlow metrics
+  - job_name: 'bitflow-contracts'
+    static_configs:
+      - targets: ['localhost:9092']
+    metrics_path: '/contract-metrics'
+    scrape_interval: 30s

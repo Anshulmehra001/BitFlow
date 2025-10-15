@@ -1,0 +1,129 @@
+{
+  "production": {
+    "apiUrl": "https://api.atomiq.exchange",
+    "websocketUrl": "wss://ws.atomiq.exchange",
+    "networkId": "bitcoin-mainnet",
+    "confirmationsRequired": 6,
+    "timeoutMs": 300000,
+    "retryAttempts": 3,
+    "retryDelayMs": 5000,
+    "maxTransactionSize": 1000000000,
+    "minTransactionSize": 1000,
+    "feeEstimationEndpoint": "/v1/fees/estimate",
+    "transactionStatusEndpoint": "/v1/transactions/{txId}/status",
+    "lockBitcoinEndpoint": "/v1/lock",
+    "unlockBitcoinEndpoint": "/v1/unlock",
+    "supportedAssets": ["BTC", "wBTC"],
+    "rateLimits": {
+      "requestsPerMinute": 60,
+      "transactionsPerHour": 100,
+      "burstLimit": 10,
+      "cooldownPeriodMs": 60000
+    },
+    "security": {
+      "requireApiKey": true,
+      "requireSignature": true,
+      "allowedOrigins": ["https://bitflow.app", "https://www.bitflow.app", "https://api.bitflow.app"],
+      "webhookSecret": "${ATOMIQ_WEBHOOK_SECRET}",
+      "tlsVersion": "1.3",
+      "certificatePinning": true,
+      "requestSigning": {
+        "algorithm": "HMAC-SHA256",
+        "includeTimestamp": true,
+        "timestampToleranceMs": 300000
+      }
+    },
+    "circuitBreaker": {
+      "enabled": true,
+      "failureThreshold": 5,
+      "recoveryTimeoutMs": 60000,
+      "monitoringWindowMs": 300000
+    },
+    "loadBalancing": {
+      "enabled": true,
+      "strategy": "round-robin",
+      "healthCheckIntervalMs": 30000,
+      "endpoints": [
+        "https://api.atomiq.exchange",
+        "https://api-backup.atomiq.exchange"
+      ]
+    }
+  },
+  "staging": {
+    "apiUrl": "https://testnet-api.atomiq.exchange",
+    "websocketUrl": "wss://testnet-ws.atomiq.exchange",
+    "networkId": "bitcoin-testnet",
+    "confirmationsRequired": 3,
+    "timeoutMs": 180000,
+    "retryAttempts": 5,
+    "retryDelayMs": 3000,
+    "maxTransactionSize": 100000000,
+    "minTransactionSize": 1000,
+    "feeEstimationEndpoint": "/v1/fees/estimate",
+    "transactionStatusEndpoint": "/v1/transactions/{txId}/status",
+    "lockBitcoinEndpoint": "/v1/lock",
+    "unlockBitcoinEndpoint": "/v1/unlock",
+    "supportedAssets": ["tBTC", "wtBTC"],
+    "rateLimits": {
+      "requestsPerMinute": 120,
+      "transactionsPerHour": 500
+    },
+    "security": {
+      "requireApiKey": true,
+      "requireSignature": false,
+      "allowedOrigins": ["https://staging.bitflow.app", "http://localhost:3000"],
+      "webhookSecret": "${ATOMIQ_WEBHOOK_SECRET}"
+    }
+  },
+  "webhooks": {
+    "endpoints": {
+      "transactionConfirmed": "/webhooks/atomiq/transaction-confirmed",
+      "transactionFailed": "/webhooks/atomiq/transaction-failed",
+      "bridgeStatusUpdate": "/webhooks/atomiq/bridge-status"
+    },
+    "retryPolicy": {
+      "maxRetries": 3,
+      "retryDelayMs": 1000,
+      "backoffMultiplier": 2
+    }
+  },
+  "monitoring": {
+    "healthCheckEndpoint": "/v1/health",
+    "metricsEndpoint": "/v1/metrics",
+    "alertThresholds": {
+      "maxPendingTransactions": 50,
+      "maxFailureRate": 0.05,
+      "maxResponseTimeMs": 5000,
+      "minSuccessRate": 0.95,
+      "maxQueueDepth": 100
+    },
+    "metrics": {
+      "enabled": true,
+      "exportInterval": 30000,
+      "customMetrics": [
+        "bridge_transaction_count",
+        "bridge_transaction_latency",
+        "bridge_failure_rate",
+        "bridge_queue_depth",
+        "bridge_confirmation_time"
+      ]
+    },
+    "logging": {
+      "level": "info",
+      "structured": true,
+      "includeRequestId": true,
+      "sensitiveFields": ["apiKey", "signature", "privateKey"]
+    }
+  },
+  "backup": {
+    "enabled": true,
+    "strategy": "multi-region",
+    "regions": ["us-east-1", "eu-west-1", "ap-southeast-1"],
+    "failoverTimeoutMs": 30000,
+    "dataReplication": {
+      "enabled": true,
+      "syncIntervalMs": 60000,
+      "consistencyLevel": "eventual"
+    }
+  }
+}

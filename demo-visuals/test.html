@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PNG Download Test</title>
+</head>
+<body>
+    <h1>Test PNG Downloads</h1>
+    <button onclick="testDownload()">Test Bitcoin Animation PNG</button>
+    
+    <script>
+    function testDownload() {
+        // Create canvas
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 1920;
+        canvas.height = 1080;
+        
+        // Background
+        ctx.fillStyle = '#f8f9fa';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw Bitcoin animation
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        ctx.font = 'bold 120px Arial';
+        ctx.fillStyle = '#f7931a';
+        ctx.fillText('₿', centerX - 200, centerY);
+        
+        ctx.font = 'bold 100px Arial';
+        ctx.fillStyle = '#4CAF50';
+        ctx.fillText('→', centerX, centerY);
+        
+        ctx.fillStyle = '#333';
+        ctx.fillText('💰', centerX + 200, centerY);
+        
+        // Download PNG
+        canvas.toBlob((blob) => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'test-bitcoin-animation.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            alert('PNG Downloaded!');
+        }, 'image/png', 1.0);
+    }
+    </script>
+</body>
+</html>
