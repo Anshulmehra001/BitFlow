@@ -117,7 +117,7 @@ Node.js 18+ | Git
 
 ### 1. Clone & Setup
 ```bash
-git clone [your-repo-url]
+git clone (https://github.com/Anshulmehra001/BitFlow)
 cd bitflow-protocol
 npm install
 ```
